@@ -83,6 +83,6 @@ class BuyAndHoldStrategy(Strategy):
                 if bars is not None and bars != []:
                     if self.bought[s] == False:
                         # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
-                        signal = SignalEvent(bars[0][0], bars[0][1], 'LONG')
+                        signal = SignalEvent(bars[0][0], bars[0][1], 'LONG', 1)
                         self.events.put(signal)
                         self.bought[s] = True

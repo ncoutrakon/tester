@@ -1,10 +1,17 @@
 # Declare the components with respective parameters
-bars = DataHandler(..)
-strategy = Strategy(..)
-port = Portfolio(..)
-broker = ExecutionHandler(..)
+import queue
+import time
+import data, strategy, portfolio, execution
+from queue import Empty
 
-while True:
+events = queue.Queue()
+bars = data.HistoricCSVDataHandler(events, "/Users/ncoutrakon/Desktop/", ["CL"])
+strategy = strategy.BuyAndHoldStrategy(bars, events)
+port = portfolio.NaivePortfolio(bars, events, "2017-05-03", initial_capital=100000.0)
+broker = execution.SimulatedExecutionHandler(events)
+i = 0
+while i < 100:
+    i += 1
     # Update the bars (specific backtest code, as opposed to live trading)
     if bars.continue_backtest == True:
         bars.update_bars()
@@ -15,9 +22,10 @@ while True:
     while True:
         try:
             event = events.get(False)
-        except Queue.Empty:
+        except Empty:
             break
         else:
+            print(event.type)
             if event is not None:
                 if event.type == 'MARKET':
                     strategy.calculate_signals(event)
@@ -33,4 +41,3 @@ while True:
                     port.update_fill(event)
 
     # 10-Minute heartbeat
-    time.sleep(10 * 60)

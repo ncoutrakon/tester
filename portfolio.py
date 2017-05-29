@@ -3,16 +3,12 @@
 # For performance metrics, go to
 # https://www.quantstart.com/articles/Event-Driven-Backtesting-with-Python-Part-VII
 
-
-import datetime
-import numpy as np
 import pandas as pd
-import queue
 
 from abc import ABCMeta, abstractmethod
 from math import floor
 
-from event import FillEvent, OrderEvent
+from event import OrderEvent
 
 
 class Portfolio(object):
