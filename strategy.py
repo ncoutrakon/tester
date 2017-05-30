@@ -86,3 +86,74 @@ class BuyAndHoldStrategy(Strategy):
                         signal = SignalEvent(bars[0][0], bars[0][1], 'LONG', 1)
                         self.events.put(signal)
                         self.bought[s] = True
+
+# will send exit orders if risk or target are met.
+# i.e. if last price is risk cents lower than our initial long
+# or if last price is greater than target cents
+class BracketStrategy(Strategy):
+    """
+    This is an extremely simple strategy that goes LONG all of the
+    symbols as soon as a bar is received. It will never exit a position.
+
+    It is primarily used as a testing mechanism for the Strategy class
+    as well as a benchmark upon which to compare other strategies.
+    """
+
+    def __init__(self, bars, port, events, risk, target):
+        """
+        Initialises the buy and hold strategy.
+
+        Parameters:
+        bars - The DataHandler object that provides bar information
+        events - The Event Queue object.
+        """
+        self.bars = bars
+        self.symbol_list = self.bars.symbol_list
+        self.events = events
+        self.port = port
+        self.risk = risk
+        self.target = target
+
+        # Once buy & hold signal is given, these are set to True
+        self.bought = self._calculate_initial_bought()
+
+    def _calculate_initial_bought(self):
+        """
+        Adds keys to the bought dictionary for all symbols
+        and sets them to False.
+        """
+        bought = {}
+        for s in self.symbol_list:
+            bought[s] = False
+        return bought
+
+    def calculate_signals(self, event):
+        """
+        For "Buy and Hold" we generate a single signal per symbol
+        and then no additional signals. This means we are
+        constantly long the market from the date of strategy
+        initialisation.
+
+        Parameters
+        event - A MarketEvent object.
+        """
+
+        if event.type == 'MARKET':
+            for s in self.symbol_list:
+                bars = self.bars.get_latest_bars(s, N=1)
+                if bars is not None and bars != []:
+                    if not self.bought[s]:
+                        # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
+                        signal = SignalEvent(bars[0][0], bars[0][1], 'LONG', 1)
+                        self.events.put(signal)
+                        self.bought[s] = True
+                    else:
+                        if self.port.trade_activity[-1][4] - bars[0][5] >= self.risk:
+                            signal = SignalEvent(bars[0][0], bars[0][1], 'EXIT', 1)
+                            self.events.put(signal)
+                            self.bought[s] = False
+
+                        elif bars[0][5] - self.port.trade_activity[-1][4] >= self.target:
+                            signal = SignalEvent(bars[0][0], bars[0][1], 'EXIT', 1)
+                            self.events.put(signal)
+                            self.bought[s] = False

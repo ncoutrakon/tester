@@ -136,7 +136,7 @@ class FillEvent(Event):
         """
         full_cost = 1.3
         if self.quantity <= 500:
-            full_cost = max(1.3, 0.013 * self.quantity)
+            full_cost = max(full_cost, 0.013 * self.quantity)
         else:  # Greater than 500
             full_cost = max(1.3, 0.008 * self.quantity)
         full_cost = min(full_cost, 0.5 / 100.0 * self.quantity * self.fill_cost)

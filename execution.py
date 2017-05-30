@@ -26,7 +26,7 @@ class ExecutionHandler(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def execute_order(self, event):
+    def execute_order(self, bars, event):
         """
         Takes an Order event and executes it, producing
         a Fill event that gets placed onto the Events queue.
@@ -48,7 +48,7 @@ class SimulatedExecutionHandler(ExecutionHandler):
     handler.
     """
 
-    def __init__(self, events):
+    def __init__(self, bars, events):
         """
         Initialises the handler, setting the event queues
         up internally.
@@ -57,6 +57,8 @@ class SimulatedExecutionHandler(ExecutionHandler):
         events - The Queue of Event objects.
         """
         self.events = events
+        self.bars = bars
+        self.symbol_list = self.bars.symbol_list
 
     def execute_order(self, event):
         """
@@ -66,7 +68,10 @@ class SimulatedExecutionHandler(ExecutionHandler):
         Parameters:
         event - Contains an Event object with order information.
         """
+
+        # uses close price of most up to date bar
+        fill_px = self.bars.get_latest_bars(event.symbol)[0][5]
         if event.type == 'ORDER':
             fill_event = FillEvent(datetime.datetime.utcnow(), event.symbol,
-                                   'ARCA', event.quantity, event.direction, 1)
+                                   'ARCA', event.quantity, event.direction, fill_px)
             self.events.put(fill_event)
