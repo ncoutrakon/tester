@@ -448,13 +448,14 @@ class NotSoNaivePortfolio(Portfolio):
             order_event = self.generate_naive_order(event)
             self.events.put(order_event)
 
-    def create_equity_curve_dataframe(self):
+    def create_cum_pnl(self):
         """
         Creates a pandas DataFrame from the all_holdings
         list of dictionaries.
         """
-        curve = pd.DataFrame(self.all_holdings)
-        curve.set_index('datetime', inplace=True)
-        curve['returns'] = curve['total'].pct_change()
+        curve = pd.DataFrame(self.trade_activity)
+        curve.columns = ["Symbol", "DateTime", "Direction", "Quantity", "Price"]
+        curve.set_index('DateTime', inplace=True)
+        curve['Cum_PnL'] = list((q*p*(math.pow(-1, (d == "LONG"))) for d,q,p in zip(x[2], x[3], x[4])))
         curve['equity_curve'] = (1.0+curve['returns']).cumprod()
         self.equity_curve = curve

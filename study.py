@@ -69,3 +69,36 @@ class VolumeBars(Study):
             bars = self.bars.get_latest_bars(s, N=1)
             if bars is not None and bars != []:
                 self.data[s] = self.calculate(bars, self.data[s])
+
+
+class VolumeProfile(Study):
+    def __init__(self, bars):
+
+        self.bars = bars
+        self.symbol_list = self.bars.symbol_list
+        self.data = self.construct_all_studies()
+
+    def construct_all_studies(self):
+        """
+        Constructs the volume bars list using the start_date
+        to determine when the time index will begin.
+        """
+        d = dict((k, v) for k, v in {s, {0: 0}} for s in self.symbol_list)
+        return d
+
+    def calculate(self, bars, study):
+        sym, time, open_px, ask, bid, trade_px, vol = bars[0]
+
+        # tallys volume traded on bid
+        if trade not in study:
+            study[trade_px] = vol
+        else:
+            study[trade_px] += vol
+
+        return study
+
+    def update(self):
+         for s in self.symbol_list:
+            bars = self.bars.get_latest_bars(s, N=1)
+            if bars is not None and bars != []:
+                self.data[s] = self.calculate(bars, self.data[s])
