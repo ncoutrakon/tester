@@ -270,7 +270,7 @@ class NotSoNaivePortfolio(Portfolio):
         self.all_holdings = self.construct_all_holdings()
         self.current_holdings = self.construct_current_holdings()
 
-        self.trade_activity = []
+        self.trade_activity = [[0, 0, 0, 0, 0]]
 
 
     def construct_all_positions(self):
@@ -353,10 +353,11 @@ class NotSoNaivePortfolio(Portfolio):
         """
         # Check whether the fill is a buy or sell
         fill_dir = 0
-        if fill.direction == 'BUY':
+        if fill.direction == 'LONG':
             fill_dir = 1
-        if fill.direction == 'SELL':
+        if fill.direction == 'SHORT':
             fill_dir = -1
+
 
         # Update positions list with new quantities
         self.current_positions[fill.symbol] += fill_dir*fill.quantity
@@ -371,9 +372,9 @@ class NotSoNaivePortfolio(Portfolio):
         """
         # Check whether the fill is a buy or sell
         fill_dir = 0
-        if fill.direction == 'BUY':
+        if fill.direction == 'LONG':
             fill_dir = 1
-        if fill.direction == 'SELL':
+        if fill.direction == 'SHORT':
             fill_dir = -1
 
         # Update holdings list with new quantities
@@ -427,14 +428,14 @@ class NotSoNaivePortfolio(Portfolio):
         order_type = 'MKT'
 
         if direction == 'LONG' and cur_quantity == 0:
-            order = OrderEvent(symbol, order_type, mkt_quantity, 'BUY')
+            order = OrderEvent(symbol, order_type, mkt_quantity, 'LONG')
         if direction == 'SHORT' and cur_quantity == 0:
-            order = OrderEvent(symbol, order_type, mkt_quantity, 'SELL')
+            order = OrderEvent(symbol, order_type, mkt_quantity, 'SHORT')
 
         if direction == 'EXIT' and cur_quantity > 0:
-            order = OrderEvent(symbol, order_type, abs(cur_quantity), 'SELL')
+            order = OrderEvent(symbol, order_type, abs(cur_quantity), 'SHORT')
         if direction == 'EXIT' and cur_quantity < 0:
-            order = OrderEvent(symbol, order_type, abs(cur_quantity), 'BUY')
+            order = OrderEvent(symbol, order_type, abs(cur_quantity), 'LONG')
         return order
 
 

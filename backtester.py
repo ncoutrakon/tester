@@ -1,16 +1,22 @@
 # Declare the components with respective parameters
 import queue
-import data, strategy, portfolio, execution
+import data, study, strategy, portfolio, execution
 from queue import Empty
+import pandas as pd
+
+pd.set_option('display.width', 200)
+
 
 events = queue.Queue()
 bars = data.HistoricCSVDataHandler(events, "/Users/ncoutrakon/Desktop/", ["CL"])
 port = portfolio.NotSoNaivePortfolio(bars, events, "2017-05-03", initial_capital=100000.0)
-strategy = strategy.BracketStrategy(bars, port, events, 4, 12)
+study = study.VolumeBars(bars, 1000)
+strategy = strategy.BracketStrategy(bars, port, events, 4, 12, study)
 broker = execution.SimulatedExecutionHandler(bars, events)
 
+
 i = 0
-while i < 10000:
+while i < 100000:
     i += 1
     # Update the bars (specific backtest code, as opposed to live trading)
     if bars.continue_backtest:
@@ -27,6 +33,7 @@ while i < 10000:
         else:
             if event is not None:
                 if event.type == 'MARKET':
+                    study.update()
                     strategy.calculate_signals(event)
                     port.update_timeindex(event)
 
@@ -39,5 +46,5 @@ while i < 10000:
                 elif event.type == 'FILL':
                     port.update_fill(event)
 
-
-print(port.trade_activity)
+print(pd.DataFrame(study.data["CL"]))
+print(pd.DataFrame(port.trade_activity))

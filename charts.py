@@ -99,7 +99,7 @@ def get_range_bars(tick_df, range_length):
 
 # Loadtick data
 tick_df = pd.read_csv(tick_filename)
-tick_df.columns = ['Date', 'Time', 'Open', 'High', 'Low', 'Close',
+tick_df.columns = ['DateTime', 'Time', 'Open', 'High', 'Low', 'Close',
                     'Vol', 'Trades', 'BidVol', 'AskVol']
 
 # Turn Floats into Integers where XXXX represents $XX.XX in price
@@ -108,11 +108,8 @@ tick_df[["Open", "High", "Low", "Close"]] = \
 
 # Datetime Manipulation
 tick_df.ix[tick_df["Time"].apply(lambda x: "." not in x), "Time"] += ".0"
-tick_df["DateTime"] = tick_df["Date"] + tick_df["Time"]
+tick_df["DateTime"] = tick_df["DateTime"] + tick_df["Time"]
 tick_df["DateTime"] = pd.to_datetime(tick_df["DateTime"], format="%Y/%m/%d %H:%M:%S.%f")
-tick_df["Date"] = pd.to_datetime(tick_df["Date"], format="%Y/%m/%d")
-tick_df = tick_df.set_index(pd.DatetimeIndex(tick_df['DateTime']))
-tick_df = tick_df.drop(tick_df.columns[10], axis=1)
 
 
 # test each chart function using only data from "2017-05-03"

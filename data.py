@@ -70,7 +70,7 @@ class HistoricCSVDataHandler(DataHandler):
             self.symbol_data[s] = pd.io.parsers.read_csv(
                 os.path.join(self.csv_dir, '%s.csv' % s),
                 header=0, index_col=0,
-                names=['datetime', 'open', 'low', 'high', 'close', 'volume', 'oi']
+                names=['datetime', 'open', 'high', 'low', 'close', 'volume']
             )
 
             # Combine the index to pad forward values
@@ -88,10 +88,11 @@ class HistoricCSVDataHandler(DataHandler):
                                                               method='pad').iterrows()
 
 
+
     def get_new_bar(self, symbol):
         """
         Returns the latest bar from the data feed as a tuple of
-        (sybmbol, datetime, open, low, high, close, volume).
+        (symbol, datetime, open, high, low, close, volume).
         """
         for b in self.symbol_data[symbol]:
             yield tuple([symbol, datetime.datetime.strptime(b[0], '%Y-%m-%d %H:%M:%S.%f'),

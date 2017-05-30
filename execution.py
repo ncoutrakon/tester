@@ -71,7 +71,8 @@ class SimulatedExecutionHandler(ExecutionHandler):
 
         # uses close price of most up to date bar
         fill_px = self.bars.get_latest_bars(event.symbol)[0][5]
+        fill_time = self.bars.get_latest_bars(event.symbol)[0][1]
         if event.type == 'ORDER':
-            fill_event = FillEvent(datetime.datetime.utcnow(), event.symbol,
+            fill_event = FillEvent(fill_time, event.symbol,
                                    'ARCA', event.quantity, event.direction, fill_px)
             self.events.put(fill_event)
