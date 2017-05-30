@@ -83,14 +83,16 @@ class VolumeProfile(Study):
         Constructs the volume bars list using the start_date
         to determine when the time index will begin.
         """
-        d = dict((k, v) for k, v in {s, {0: 0}} for s in self.symbol_list)
+
+        #d = dict((k, v) for k, v in [(s, [[0, 0, 0, 0, 0, 0]]) for s in self.symbol_list])
+        d = dict((k, v) for k, v in [(s, {0: 0}) for s in self.symbol_list])
         return d
 
     def calculate(self, bars, study):
         sym, time, open_px, ask, bid, trade_px, vol = bars[0]
 
         # tallys volume traded on bid
-        if trade not in study:
+        if trade_px not in study:
             study[trade_px] = vol
         else:
             study[trade_px] += vol
