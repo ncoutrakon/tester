@@ -212,9 +212,7 @@ class VolumeProfile(Strategy):
         self.risk = risk
         self.target = target
         self.study = study
-
-
-        self.wait_bars = 10
+        self.wait = 500
 
         # Once buy & hold signal is given, these are set to True
         self.bought = self._calculate_initial_bought()
@@ -234,7 +232,6 @@ class VolumeProfile(Strategy):
         self.study = study.reset_index()
         self.study.columns = ["Price", "Volume"]
 
-
     def send_exit(self, bars):
         check_risk, check_target = False, False
         if self.port.trade_activity[-1][2] == "LONG":
@@ -247,26 +244,25 @@ class VolumeProfile(Strategy):
         return check_risk or check_target
 
     def wait_period(self, s):
-        return len(self.study.data[s]) > self.wait_bars
+        study = self.study.data[s]
+        total_volume = sum(v for k,v in study.items())
+        wait = total_volume > self.wait
+        return wait
 
     def send_entry(self, s):
-        study = pd.DataFrame.from_dict(self.study.data[s], 'index')
-        study = study.drop(0)
-        study = study.reset_index()
-        study.columns = ["Price", "Volume"]
-        study = study.sort_values("Price", ascending = False)
-        study["Norm"] = study.Volume / np.linalg.norm(study.Volume)
+        study = self.study.data[s]
+        value_areas = self.study.value_areas["CL"]
+        # norm_value = np.linalg.norm(list(v for k, v in study.items()))
+
+        # normal_prices = dict((k, v/norm_value) for k,v in study.items())
 
         bars = self.bars.get_latest_bars(s, N=1)
-        price = study[study.Price == bars[0][5]]
-        print(bars)
-        print(price)
-        go_long = price["Norm"] < .1
-
-        if go_long:
-            return 1
-        else:
-            return -1
+        # normal_prices[bars[0][5]] < .10
+        if bars[0][5] in value_areas[0]:
+            if value_areas[1][value_areas[0].index(bars[0][5])]:
+                return -1
+            else:
+                return 1
 
     def calculate_signals(self, event):
         """
@@ -301,4 +297,4 @@ class VolumeProfile(Strategy):
                             signal = SignalEvent(bars[0][0], bars[0][1], 'EXIT', 1)
                             self.events.put(signal)
                             self.bought[s] = False
-                            self.wait_bars = self.study.data[s].shape[0]
+                            self.wait += 2000

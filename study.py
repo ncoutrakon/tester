@@ -78,14 +78,27 @@ class VolumeProfile(Study):
         self.symbol_list = self.bars.symbol_list
         self.data = self.construct_all_studies()
 
+        # VAL, POC, VAH
+        self.value_areas = self.construct_value_areas()
+
     def construct_all_studies(self):
         """
         Constructs the volume bars list using the start_date
         to determine when the time index will begin.
         """
 
-        #d = dict((k, v) for k, v in [(s, [[0, 0, 0, 0, 0, 0]]) for s in self.symbol_list])
-        d = dict((k, v) for k, v in [(s, {0: 0}) for s in self.symbol_list])
+        d = dict((k, v) for k, v in [(s, {}) for s in self.symbol_list])
+
+        return d
+
+    def construct_value_areas(self):
+        """
+        Constructs the volume bars list using the start_date
+        to determine when the time index will begin.
+        """
+
+        d = dict((k, v) for k, v in [(s, [0, 0, 0]) for s in self.symbol_list])
+
         return d
 
     def calculate(self, bars, study):
@@ -99,8 +112,29 @@ class VolumeProfile(Study):
 
         return study
 
+    def get_value_areas(self, bars, study):
+        total_volume = sum(v for k,v in study.items())
+        va_threshold = .7*total_volume
+        poc = max(study, key=(lambda key: study[key]))
+        va_volume = study[poc]
+        val, vah = poc - 1, poc + 1
+        i = 1
+        while va_volume < va_threshold:
+            val = poc - i
+            vah = poc +i
+            if val in study: va_volume += study[val]
+            if vah in study: va_volume += study[vah]
+            i += 1
+        value_areas = [val, poc, vah]
+        value_area_status = list(bars[0][5] < i for i in value_areas)
+
+        return [value_areas, value_area_status]
+
+
     def update(self):
          for s in self.symbol_list:
             bars = self.bars.get_latest_bars(s, N=1)
             if bars is not None and bars != []:
                 self.data[s] = self.calculate(bars, self.data[s])
+                self.value_areas[s] = self.get_value_areas(bars, self.data[s])
+
