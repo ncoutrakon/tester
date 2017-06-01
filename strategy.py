@@ -212,7 +212,8 @@ class VolumeProfile(Strategy):
         self.risk = risk
         self.target = target
         self.study = study
-        self.wait = 500
+        self.wait = 10000
+        self.total_volume = 0
 
         # Once buy & hold signal is given, these are set to True
         self.bought = self._calculate_initial_bought()
@@ -244,25 +245,31 @@ class VolumeProfile(Strategy):
         return check_risk or check_target
 
     def wait_period(self, s):
+        # returns boolean to wait
+        # calculates total volume of the time period.
+        # must be greater than initial self.wait threshold to consider a trade
+        # once we trade and exit, must then wait
         study = self.study.data[s]
-        total_volume = sum(v for k,v in study.items())
-        wait = total_volume > self.wait
+        self.total_volume = sum(v for k,v in study.items())
+        wait = self.total_volume < self.wait
         return wait
 
     def send_entry(self, s):
-        study = self.study.data[s]
+        # checks to see if current price is a value_area number
+        # places order with appropriate direction
+
+        # value_areas = [[XXXX, XXXX, XXXX], [T, T, T]]
         value_areas = self.study.value_areas["CL"]
-        # norm_value = np.linalg.norm(list(v for k, v in study.items()))
-
-        # normal_prices = dict((k, v/norm_value) for k,v in study.items())
-
         bars = self.bars.get_latest_bars(s, N=1)
-        # normal_prices[bars[0][5]] < .10
+
         if bars[0][5] in value_areas[0]:
+            # grabs direction of price relative to each value_are number
+            # TRUE means price is coming from below
             if value_areas[1][value_areas[0].index(bars[0][5])]:
-                return -1
-            else:
                 return 1
+            else:
+                print("ABOVE")
+                return -1
 
     def calculate_signals(self, event):
         """
@@ -279,22 +286,25 @@ class VolumeProfile(Strategy):
             for s in self.symbol_list:
                 bars = self.bars.get_latest_bars(s, N=1)
 
-                if bars is not None and bars != [] and self.wait_period(s):
+                # is there a valid bar and should we be not waiting for more bars
+                if bars is not None and bars != [] and not self.wait_period(s):
                     if not self.bought[s] and self.send_entry(s) == 1:
                         # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
                         signal = SignalEvent(bars[0][0], bars[0][1], 'LONG', 1)
                         self.events.put(signal)
                         self.bought[s] = True
-
                     elif not self.bought[s] and self.send_entry(s) == -1:
                         # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
                         signal = SignalEvent(bars[0][0], bars[0][1], 'SHORT', 1)
                         self.events.put(signal)
                         self.bought[s] = True
 
+                    # if we already have a position
                     elif self.bought[s]:
                         if self.send_exit(bars):
                             signal = SignalEvent(bars[0][0], bars[0][1], 'EXIT', 1)
                             self.events.put(signal)
                             self.bought[s] = False
-                            self.wait += 2000
+
+                            # must wait an additional 2000volume before reentering a trade
+                            self.wait = self.total_volume + 2000

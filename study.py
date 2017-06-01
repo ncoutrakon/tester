@@ -130,7 +130,6 @@ class VolumeProfile(Study):
 
         return [value_areas, value_area_status]
 
-
     def update(self):
          for s in self.symbol_list:
             bars = self.bars.get_latest_bars(s, N=1)
