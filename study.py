@@ -1,5 +1,3 @@
-
-
 class Study(object):
     """
     Study is an abstract base class providing an interface for
@@ -41,10 +39,8 @@ class VolumeBars(Study):
             study[-1][4] = close
 
             # updates new high, low for each volume bar
-            if study[-1][2] < high:
-                study[-1][2] = high
-            if study[-1][3] > low:
-                study[-1][3] = low
+            study[-1][2] = max(study[-1][2], high)
+            study[-1][3] = min(study[-1][3], low)
 
             vol_counter += vol
             study[-1][5] = vol_counter
@@ -53,10 +49,9 @@ class VolumeBars(Study):
         # adds volume up to volume parameter to current bar and
         # creates a new bar
         elif vol_counter + vol > self.volume:
-            if study[-1][2] < high:
-                study[-1][2] = high
-            if study[-1][3] > low:
-                study[-1][3] = low
+            study[-1][2] = max(study[-1][2], high)
+            study[-1][3] = min(study[-1][3], low)
+
             study[-1][4] = close
             study[-1][5] = self.volume
             vol = vol_counter + vol - self.volume

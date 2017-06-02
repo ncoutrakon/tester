@@ -12,12 +12,12 @@ bars = data.HistoricCSVDataHandler(events, "/Users/ncoutrakon/Desktop/", ["CL"])
 port = portfolio.NotSoNaivePortfolio(bars, events, "2017-05-03", initial_capital=100000.0)
 study_vb = study.VolumeBars(bars, 1000)
 study_vp = study.VolumeProfile(bars)
-strategy = strategy.VolumeProfile(bars, port, events, 5, 30, study_vp)
+strategy = strategy.VolumeBar3(bars, port, events, 5, 30, study_vb)
 broker = execution.SimulatedExecutionHandler(bars, events)
 
 
 i = 0
-while True:
+while i < 100000:
     i += 1
     # Update the bars (specific backtest code, as opposed to live trading)
     if bars.continue_backtest:
@@ -47,6 +47,6 @@ while True:
 
                 elif event.type == 'FILL':
                     port.update_fill(event)
-    print(i)
+
 
 print(pd.DataFrame(port.trade_activity))

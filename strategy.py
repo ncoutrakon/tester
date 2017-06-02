@@ -268,7 +268,6 @@ class VolumeProfile(Strategy):
             if value_areas[1][value_areas[0].index(bars[0][5])]:
                 return 1
             else:
-                print("ABOVE")
                 return -1
 
     def calculate_signals(self, event):
