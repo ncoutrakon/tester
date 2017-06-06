@@ -132,3 +132,55 @@ class VolumeProfile(Study):
                 self.data[s] = self.calculate(bars, self.data[s])
                 self.value_areas[s] = self.get_value_areas(bars, self.data[s])
 
+class RangeBars(Study):
+    def __init__(self, bars, range_length):
+
+        self.bars = bars
+        self.symbol_list = self.bars.symbol_list
+        self.data = self.construct_all_studies()
+        self.range = range_length
+
+    def construct_all_studies(self):
+        """
+        Constructs the volume bars list using the start_date
+        to determine when the time index will begin.
+        """
+        d = dict((k, v) for k, v in [(s, [[ (), () ]] ) for s in self.symbol_list])
+        return d
+
+    def calculate(self, bars, study):
+        sym, time, open_px, high, low, close, vol = bars[0]
+        bid_vol, ask_vol = (close <= low) * vol, (close >= high) * vol * (low != high)
+
+        range_time = study[-1][0]
+        range_slice = study[-1][1]
+
+        if not range_time:
+            print("New")
+            range_time = time
+            range_slice = {close: [0, 0]}
+
+
+        prices = list(k for k, v in range_slice.items())
+        prices.append(close)
+        range_counter = max(prices) - min(prices)
+        print([prices, range_counter])
+
+        if range_counter < self.range:
+            if close in range_slice:
+                bid_vol += range_slice[close][0]
+                ask_vol += range_slice[close][1]
+
+            range_slice[close] = [bid_vol, ask_vol]
+            print(range_slice)
+            study[-1] = [range_time, range_slice]
+        else:
+            study.append([time, {close: [bid_vol, ask_vol]}])
+
+        return study
+
+    def update(self):
+         for s in self.symbol_list:
+            bars = self.bars.get_latest_bars(s, N=1)
+            if bars is not None and bars != []:
+                self.data[s] = self.calculate(bars, self.data[s])
