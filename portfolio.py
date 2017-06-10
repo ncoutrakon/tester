@@ -3,10 +3,10 @@
 import pandas as pd
 
 from abc import ABCMeta, abstractmethod
-from math import floor
-
+import math
 from event import OrderEvent
-
+from performance import *
+from functools import reduce
 
 class Portfolio(object):
     """
@@ -271,6 +271,7 @@ class NotSoNaivePortfolio(Portfolio):
         self.current_holdings = self.construct_current_holdings()
 
         self.trade_activity = [[0, 0, 0, 0, 0]]
+        self.market_snapshot = [["time", "VP", "Volume Bars", "Range"]]
 
 
     def construct_all_positions(self):
@@ -438,7 +439,6 @@ class NotSoNaivePortfolio(Portfolio):
             order = OrderEvent(symbol, order_type, abs(cur_quantity), 'LONG')
         return order
 
-
     def update_signal(self, event):
         """
         Acts on a SignalEvent to generate new orders
@@ -453,9 +453,30 @@ class NotSoNaivePortfolio(Portfolio):
         Creates a pandas DataFrame from the all_holdings
         list of dictionaries.
         """
-        curve = pd.DataFrame(self.trade_activity)
-        curve.columns = ["Symbol", "DateTime", "Direction", "Quantity", "Price"]
-        curve.set_index('DateTime', inplace=True)
-        curve['Cum_PnL'] = list((q*p*(math.pow(-1, (d == "LONG"))) for d,q,p in zip(x[2], x[3], x[4])))
-        curve['equity_curve'] = (1.0+curve['returns']).cumprod()
-        self.equity_curve = curve
+        cum_pnl = self.trade_activity
+        cum_pnl.pop(0)
+        cum_pnl = list((t[3]*t[4]*(math.pow(-1, (t[2] == "LONG"))) for t in cum_pnl))
+        if len(cum_pnl) % 2 != 0:
+            cum_pnl.pop(-1)
+        cum_pnl = list(cum_pnl[i] + cum_pnl[i + 1] for i in range(len(cum_pnl) - 1) if i % 2 == 0)
+        cum_pnl = np.cumsum(cum_pnl)
+        return cum_pnl
+
+
+    def output_summary_stats(self):
+        """
+        Creates a list of summary statistics for the portfolio such
+        as Sharpe Ratio and drawdown information.
+        """
+        total_return = self.equity_curve['equity_curve'][-1]
+        returns = self.equity_curve['returns']
+        pnl = self.equity_curve['equity_curve']
+
+        sharpe_ratio = create_sharpe_ratio(returns)
+        max_dd, dd_duration = create_drawdowns(pnl)
+
+        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
+                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
+                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
+                 ("Drawdown Duration", "%d" % dd_duration)]
+        return stats

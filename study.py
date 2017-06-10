@@ -152,27 +152,26 @@ class RangeBars(Study):
         sym, time, open_px, high, low, close, vol = bars[0]
         bid_vol, ask_vol = (close <= low) * vol, (close >= high) * vol * (low != high)
 
-        range_time = study[-1][0]
-        range_slice = study[-1][1]
+        range_time = study[-1][0] # timestamp of range bar
+        range_slice = study[-1][1] # range bar dictionary {px: [bid_vol, ask_vol]}
 
+        # initiates range_time and range_slice if this is first bar being created
         if not range_time:
-            print("New")
             range_time = time
             range_slice = {close: [0, 0]}
 
-
+        # creates list of prices in range to determine if new range bar should be created
         prices = list(k for k, v in range_slice.items())
         prices.append(close)
-        range_counter = max(prices) - min(prices)
-        print([prices, range_counter])
+        range_counter = max(prices) - min(prices) + 1
 
-        if range_counter < self.range:
+        # if new range_bar should be created
+        if range_counter <= self.range:
             if close in range_slice:
                 bid_vol += range_slice[close][0]
                 ask_vol += range_slice[close][1]
 
             range_slice[close] = [bid_vol, ask_vol]
-            print(range_slice)
             study[-1] = [range_time, range_slice]
         else:
             study.append([time, {close: [bid_vol, ask_vol]}])
@@ -180,7 +179,7 @@ class RangeBars(Study):
         return study
 
     def update(self):
-         for s in self.symbol_list:
+        for s in self.symbol_list:
             bars = self.bars.get_latest_bars(s, N=1)
             if bars is not None and bars != []:
                 self.data[s] = self.calculate(bars, self.data[s])
