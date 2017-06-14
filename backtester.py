@@ -57,5 +57,5 @@ while i < 50000:
 
 
 # print(pd.DataFrame(port.trade_activity))
-for i, snap in enumerate(port.market_snapshot):
-    port.trade_activity[i].extend(snap)
+#for i, snap in enumerate(port.market_snapshot):
+#    port.trade_activity[i].extend(snap)

@@ -270,7 +270,8 @@ class NotSoNaivePortfolio(Portfolio):
         self.all_holdings = self.construct_all_holdings()
         self.current_holdings = self.construct_current_holdings()
 
-        self.trade_activity = [[0, 0, 0, 0, 0]]
+        self.trade_activity = self.construct_trade_activity()
+
         self.market_snapshot = [["time", "VP", "Volume Bars", "Range"]]
 
 
@@ -304,6 +305,20 @@ class NotSoNaivePortfolio(Portfolio):
         d['cash'] = self.initial_capital
         d['commission'] = 0.0
         d['total'] = self.initial_capital
+        return d
+
+    def construct_trade_activity(self):
+        """
+        This constructs the dictionary which will hold the instantaneous
+        value of the portfolio across all symbols.
+        """
+
+        trade_activity_columns = [["Symbol", "Direction", "Entry Datetime", "Entry Quantity",
+                                   "Entry Price", "Exit Price", "Exit Quantity", "Exit Datetime",
+                                   "High Price", "Low Price"]]
+
+        d = dict((k,v) for k, v in [(s, trade_activity_columns) for s in self.symbol_list] )
+
         return d
 
     def update_timeindex(self, event):
@@ -394,7 +409,9 @@ class NotSoNaivePortfolio(Portfolio):
         Parameters:
         fill - The FillEvent object to update the holdings with.
         """
-
+        trade_activity = self.trade_activity[fill.symbol]
+        if len(trade_activity) == 1:
+            trade_activity
         ta =[fill.symbol, fill.timeindex, fill.direction, fill.quantity, fill.fill_cost]
         self.trade_activity.append(ta)
 
