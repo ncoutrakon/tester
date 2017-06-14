@@ -359,6 +359,21 @@ class NotSoNaivePortfolio(Portfolio):
         # Append the current holdings
         self.all_holdings.append(dh)
 
+        # Update Runup and Drawdowns
+        for s in self.symbol_list:
+            ta = self.trade_activity[s]
+            high_px, low_px = ta[-1][-2], ta[-1][-1]
+            market_px = bars[s][-1][5]
+
+            # check if trade activity is empty and if we are in an open position
+            # then updates the high and low prices seen throughout duration of the last trade
+            if len(ta) > 1 and len(ta[-1]) == 7:
+                ta[-1][-2] = max(high_px, market_px)
+                ta[-1][-1] = min(low_px, market_px)
+
+            self.trade_activity[s][-1] = ta[-1]
+
+
     def update_positions_from_fill(self, fill):
         """
         Takes a FilltEvent object and updates the position matrix
@@ -373,7 +388,6 @@ class NotSoNaivePortfolio(Portfolio):
             fill_dir = 1
         if fill.direction == 'SHORT':
             fill_dir = -1
-
 
         # Update positions list with new quantities
         self.current_positions[fill.symbol] += fill_dir*fill.quantity
@@ -409,13 +423,13 @@ class NotSoNaivePortfolio(Portfolio):
         Parameters:
         fill - The FillEvent object to update the holdings with.
         """
-        trade_entry = [fill.symbol, fill.direction, fill.timeindex,  fill.quantity, fill.fill_cost]
-        trade_exit = [fill.fill_cost, fill.quantity, fill.timeindex, "HIGH_PX", "LOW_PX"]
+        trade_entry = [fill.symbol, fill.direction, fill.timeindex,  fill.quantity, fill.fill_cost, fill.fill_cost, fill.fill_cost]
+        trade_exit = [fill.fill_cost, fill.quantity, fill.timeindex]
         trade_activity = self.trade_activity[fill.symbol]
         if len(trade_activity) == 1 or len(trade_activity[-1]) == 10:
             trade_activity.append(trade_entry)
         else:
-            trade_activity[-1].extend(trade_exit)
+            trade_activity[-1] = trade_activity[-1][:5] + trade_exit + trade_activity[-1][5:]
 
         self.trade_activity[fill.symbol] = trade_activity
 

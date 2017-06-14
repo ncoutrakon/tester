@@ -19,7 +19,7 @@ broker = execution.SimulatedExecutionHandler(bars, events)
 
 
 i = 0
-while i < 50000:
+while i < 100000:
     i += 1
     # Update the bars (specific backtest code, as opposed to live trading)
     if bars.continue_backtest:
@@ -54,8 +54,3 @@ while i < 50000:
 
                 elif event.type == 'FILL':
                     port.update_fill(event)
-
-
-# print(pd.DataFrame(port.trade_activity))
-#for i, snap in enumerate(port.market_snapshot):
-#    port.trade_activity[i].extend(snap)
