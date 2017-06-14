@@ -349,14 +349,17 @@ class RangeBar(Strategy):
             bought[s] = False
         return bought
 
-    def send_exit(self, bars):
+    def send_exit(self, bars, s):
         check_risk, check_target = False, False
-        if self.port.trade_activity[-1][2] == "LONG":
-            check_risk = (self.port.trade_activity[-1][4] - bars[0][5] >= self.risk)
-            check_target = (bars[0][5] - self.port.trade_activity[-1][4] >= self.target)
-        elif self.port.trade_activity[-1][2] == "SHORT":
-            check_target = (self.port.trade_activity[-1][4] - bars[0][5] >= self.target)
-            check_risk = (bars[0][5] - self.port.trade_activity[-1][4] >= self.risk)
+        trade_direction = self.port.trade_activity[s][-1][1]
+        trade_price = self.port.trade_activity[s][-1][4]
+        if trade_direction == "LONG":
+            check_risk = (trade_price - bars[0][5] >= self.risk)
+            check_target = (bars[0][5] - trade_price >= self.target)
+
+        elif trade_direction == "SHORT":
+            check_target = (trade_price - bars[0][5] >= self.target)
+            check_risk = (bars[0][5] - trade_price >= self.risk)
 
         return check_risk or check_target
 
@@ -394,12 +397,10 @@ class RangeBar(Strategy):
         if event.type == 'MARKET':
             for s in self.symbol_list:
                 bars = self.bars.get_latest_bars(s, N=1)
-
                 if bars is not None and bars != [] and self.wait_period(s):
                     if not self.bought[s] and self.send_entry(s) == 1:
                         # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
                         signal = SignalEvent(bars[0][0], bars[0][1], 'LONG', 1)
-                        print(self.study.data[s])
                         self.events.put(signal)
                         self.bought[s] = True
 
@@ -410,7 +411,7 @@ class RangeBar(Strategy):
                         self.bought[s] = True
 
                     elif self.bought[s]:
-                        if self.send_exit(bars):
+                        if self.send_exit(bars, s):
                             signal = SignalEvent(bars[0][0], bars[0][1], 'EXIT', 1)
                             self.events.put(signal)
                             self.bought[s] = False
