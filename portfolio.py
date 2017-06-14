@@ -409,11 +409,15 @@ class NotSoNaivePortfolio(Portfolio):
         Parameters:
         fill - The FillEvent object to update the holdings with.
         """
+        trade_entry = [fill.symbol, fill.direction, fill.timeindex,  fill.quantity, fill.fill_cost]
+        trade_exit = [fill.fill_cost, fill.quantity, fill.timeindex, "HIGH_PX", "LOW_PX"]
         trade_activity = self.trade_activity[fill.symbol]
-        if len(trade_activity) == 1:
-            trade_activity
-        ta =[fill.symbol, fill.timeindex, fill.direction, fill.quantity, fill.fill_cost]
-        self.trade_activity.append(ta)
+        if len(trade_activity) == 1 or len(trade_activity[-1]) == 10:
+            trade_activity.append(trade_entry)
+        else:
+            trade_activity[-1].extend(trade_exit)
+
+        self.trade_activity[fill.symbol] = trade_activity
 
 
     def update_fill(self, event):
