@@ -19,7 +19,7 @@ broker = execution.SimulatedExecutionHandler(bars, events)
 
 
 i = 0
-while i < 100000:
+while i < 500000:
     i += 1
     # Update the bars (specific backtest code, as opposed to live trading)
     if bars.continue_backtest:
@@ -54,3 +54,5 @@ while i < 100000:
 
                 elif event.type == 'FILL':
                     port.update_fill(event)
+
+print(performance.clean_trade_activity(port.trade_activity["CL"]))

@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+import copy as cp
 
 def create_sharpe_ratio(returns, periods=252):
     """
@@ -69,4 +70,24 @@ def clean_range(range_bars):
     ranges.columns = dates
 
     return ranges
+
+
+def clean_trade_activity(ta):
+    # cleans up portfolio.trade_activity[sym] for output
+    # returns pandas DataFrame
+    ta_copy = ta[:]
+    ta_copy[0].extend(["Runup", "Drawdown", "PnL", "Cum PnL"])
+
+    # add runup and drawdowns for long and shorts
+    list(t.extend([t[8] - t[4], t[9] - t[4]]) for t in ta_copy[1:] if t[1] == "LONG")
+    list(t.extend([t[4] - t[9], t[4] - t[8]]) for t in ta_copy[1:] if t[1] == "SHORT")
+
+    pnl = list(np.power(-1, t[1] == "LONG") * (t[4] - t[5]) for t in ta_copy[1:])
+    cum_pnl = np.cumsum(pnl)
+
+    # add pnl and cum_pnl to trade activity lists
+    list(t.extend([p, c]) for t, p, c in zip(ta_copy[1:], pnl, cum_pnl))
+
+    ta_copy = pd.DataFrame(ta_copy[1:], columns = ta_copy[0])
+    return ta_copy
 

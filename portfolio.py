@@ -483,19 +483,6 @@ class NotSoNaivePortfolio(Portfolio):
             order_event = self.generate_naive_order(event)
             self.events.put(order_event)
 
-    def create_cum_pnl(self):
-        """
-        Creates a pandas DataFrame from the all_holdings
-        list of dictionaries.
-        """
-        cum_pnl = self.trade_activity
-        cum_pnl.pop(0)
-        cum_pnl = list((t[3]*t[4]*(math.pow(-1, (t[2] == "LONG"))) for t in cum_pnl))
-        if len(cum_pnl) % 2 != 0:
-            cum_pnl.pop(-1)
-        cum_pnl = list(cum_pnl[i] + cum_pnl[i + 1] for i in range(len(cum_pnl) - 1) if i % 2 == 0)
-        cum_pnl = np.cumsum(cum_pnl)
-        return cum_pnl
 
 
     def output_summary_stats(self):
